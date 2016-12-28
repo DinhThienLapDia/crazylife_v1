@@ -1,6 +1,8 @@
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.encoding import python_2_unicode_compatible
+from django.utils.safestring import mark_safe 
 
 @python_2_unicode_compatible
 class UserProfile(models.Model):
@@ -60,22 +62,29 @@ class  Comment(models.Model):
         return self.content
 @python_2_unicode_compatible
 class Action(models.Model):
-    title = models.CharField(max_length=1024, null=True, blank=True,verbose_name=u'Title')
-    content = models.TextField(max_length=20000,verbose_name='Details')
+    title = models.CharField(max_length=1024, null=True, blank=False,verbose_name=u'Title')
+    firstPicture = models.ImageField(upload_to='action/images', blank=True)
+    content = models.TextField(max_length=20000,null=True,blank=False,verbose_name='Details')
     createDate = models.DateTimeField(auto_now_add=True,verbose_name='CreatedDate')
     startDate = models.DateTimeField(null=True, blank=True,verbose_name='StartDate')
     endDate = models.DateTimeField(null=True, blank=True,verbose_name='EndDate')
-    modified =          models.DateTimeField(auto_now=True,verbose_name='timeUpdated')
-    firstPicture = models.ImageField(upload_to='action/images', blank=True)
-    actionPictures = models.ManyToManyField('ActionPicture',blank=True,verbose_name='list pictures')
-    listRefLink = models.ManyToManyField('ActionRefLink', blank=True,verbose_name='ListRefLink')
-    listComment = models.ManyToManyField('Comment', blank=True,verbose_name='listComment')
-    likeby = models.ManyToManyField('UserProfile', blank=True, verbose_name='likers')
+    modified =  models.DateTimeField(auto_now=True,verbose_name='timeUpdated')
+    #imageurl = u'<img src="%s" />' % (self.firstPicture.url)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,null=True,blank=True, related_name='author')
+    isverified = models.BooleanField(verbose_name='isverified',default=False)
     class Meta:
         verbose_name = "Action"
         verbose_name_plural = "Actions"
     def __str__(self):
         return self.title
+
+    def showimage(self):
+	if self.firstPicture:
+            return mark_safe('<img src="%s" width="480" height="480"/>' % (self.firstPicture.url))
+	else:
+	    return 'no image'
+    showimage.short_decription = 'imagedisplay'
+   # showimage.allow_tags = True
 @python_2_unicode_compatible
 class Invitation(models.Model):
     fromuser = models.ForeignKey('UserProfile',related_name='+')
